@@ -2,6 +2,7 @@ import pprint
 
 import requests
 
+from PostgreSQL_work.postgresql_work.dbmanager import DBManager
 from PostgreSQL_work.postgresql_work.vacancy import Vacancy
 
 
@@ -58,10 +59,10 @@ class HeadHunterAPI:
             salary_to = (vacancy.get('salary') or {}).get('to', 0)
             link = vacancy.get('alternate_url', 'Не указана')
             address = vacancy['area'].get('name')
-            responsibilities = vacancy['snippet'].get('requirement')
-            Vacancy(name_company, name_job, salary_from, salary_to, link, address, responsibilities)
+            Vacancy(name_company, name_job, salary_from, salary_to, link, address)
 
 
 hh = HeadHunterAPI()
 hh.get_vacancies('CoMagic')
-pprint.pprint([v for v in Vacancy.data])
+# pprint.pprint(Vacancy.data)
+pprint.pprint(DBManager.add_db())

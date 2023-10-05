@@ -3,7 +3,7 @@ class Vacancy:
 
     data = []
 
-    def __init__(self, name_company, name_job, salary_from, salary_to,  link, address, responsibilities):
+    def __init__(self, name_company, name_job, salary_from, salary_to,  link, address):
         """
         Инициализирует объект вакансии.
 
@@ -14,7 +14,7 @@ class Vacancy:
             salary_to (int): Максимальная зарплата.
             link (str): Ссылка на вакансию.
             address (str): Место работы.
-            responsibilities (str): Описание обязанностей.
+
         """
         self.name_company = name_company
         self.name_job = name_job
@@ -22,18 +22,18 @@ class Vacancy:
         self.salary_to = salary_to if salary_to else 0
         self.link = link
         self.address = address
-        self.responsibilities = responsibilities
         self._avr_salary = self.calc_salary(self.salary_from, self.salary_to)
         Vacancy.data.append(self)
 
+ #    def __repr__(self):
+ #        return f"""Компания:{self.name_company}
+ # Должность: {self.name_job}
+ # Средняя зарплата: {self._avr_salary}
+ # Адрес: {self.address}
+ # Ссылка: {self.link}
+ #    """
     def __repr__(self):
-        return f"""Компания:{self.name_company}
- Должность: {self.name_job}
- Средняя зарплата: {self._avr_salary}
- Адрес: {self.address}
- Условия: {self.responsibilities}
- Ссылка: {self.link}
-    """
+        return f"""{self.name_company}, {self.name_job}, {self._avr_salary}, {self.address}, {self.link}"""
 
     @staticmethod
     def calc_salary(salary_min: int, salary_max: int) -> int:
