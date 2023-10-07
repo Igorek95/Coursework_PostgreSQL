@@ -5,26 +5,93 @@ import psycopg2
 from PostgreSQL_work.postgresql_work.vacancy import Vacancy
 
 
+
 class DBManager:
-    @staticmethod
-    def add_db(name_table):
+    def __init__(self, host: str, database: str, user: str, password: int):
+        self.host = host
+        self.database = database
+        self.user = user
+        self._password = password
+
+    def create_database(self):
         try:
-            data_tuple = [(v.name_company, v.name_job, v.salary_from, v.salary_to, v.link, v.address) for v in Vacancy.data]
+            # Подключаемся к базе данных PostgreSQL (по умолчанию "postgres")
+            conn = psycopg2.connect(host=self.host, database="north", user=self.user, password=self._password)
+            cur = conn.cursor()
+            conn.autocommit = True
+
+            cur.execute(f"DROP DATABASE IF EXISTS {self.database}")
+            cur.execute(f"CREATE DATABASE {self.database}")
+
+            conn.close()
+
+            # Повторно подключаемся к созданной базе данных
+            conn = psycopg2.connect(host=self.host, database=self.database, user=self.user,
+                                    password=self._password)
+
+            # Создаем таблицу company
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE company (
+                        id_company serial PRIMARY KEY,
+                        company_name varchar(30) NOT NULL,
+                        count_vacancy int
+                    )
+                """)
+
+                # Создаем уникальное ограничение на поле company_name
+                cur.execute("""
+                    ALTER TABLE company
+                    ADD CONSTRAINT company_name_unique UNIQUE (company_name);
+                """)
+
+            # Создаем таблицу vacancies
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE vacancies (
+                        id_vacancy serial PRIMARY KEY,
+                        name_job varchar(50) NOT NULL,
+                        avr_salary int,
+                        link_vacancy varchar(30),
+                        address varchar(100),
+                        company_id integer REFERENCES company(id_company) NOT NULL
+                    )
+                """)
+
+                conn.commit()
+                conn.close()
+        except Exception as e:
+            print(f"Ошибка при создании базы данных: {e}")
+        finally:
+            conn.close()
+
+    def add_db(self):
+        try:
+            data_vacancies = [(v.name_company, v.name_job, v.avr_salary, v.link, v.address) for v in
+                              Vacancy.data]
 
             # Подключаемся к базе данных
-            with psycopg2.connect(host='localhost', database='coursework_PostgreSQL', user='postgres', password='1234') as conn:
+            with psycopg2.connect(host=self.host, database=self.database, user=self.user,
+                                  password=self._password) as conn:
                 with conn.cursor() as cur:
-                    # Создаем строку SQL для вставки данных
-                    columns = ', '.join(data_tuple)
-                    placeholders = ', '.join(['%s'] * len(data_tuple))
-                    sql = f'INSERT INTO {name_table} ({columns}) VALUES ({placeholders})'
+                    for vacancy in data_vacancies:
+                        # Создаем строку SQL для вставки информации о компании
+                        company_sql = 'INSERT INTO company (company_name, count_vacancy) VALUES (%s, 1) ON CONFLICT (company_name) DO UPDATE SET count_vacancy = company.count_vacancy + 1 RETURNING id_company'
+                        company_values = (vacancy[0],)
 
-                    # Вставляем данные в базу данных
-                    cur.executemany(sql, data_tuple)
+                        # Вставляем информацию о компании и получаем ID компании
+                        cur.execute(company_sql, company_values)
+                        company_id = cur.fetchone()[0]
 
-        finally:
-            # Закрываем соединение с базой данных
-            conn.close()
+                        # Создаем строку SQL для вставки данных о вакансии
+                        vacancies_sql = 'INSERT INTO vacancies (company_id, name_job, avr_salary, link_vacancy, address) VALUES (%s, %s, %s, %s, %s)'
+                        vacancies_data = (company_id, vacancy[1], vacancy[2], vacancy[3], vacancy[4])
+
+                        # Вставляем данные о вакансии в базу данных
+                        cur.execute(vacancies_sql, vacancies_data)
+
+        except Exception as e:
+            print(f"Ошибка при добавлении данных: {e}")
 
     def get_all_vacancies(self):
         """

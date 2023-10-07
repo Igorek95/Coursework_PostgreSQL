@@ -65,4 +65,6 @@ class HeadHunterAPI:
 hh = HeadHunterAPI()
 hh.get_vacancies('CoMagic')
 # pprint.pprint(Vacancy.data)
-pprint.pprint(DBManager.add_db())
+db = DBManager('localhost', 'coursework_postgresql', 'postgres', 1234)
+db.create_database()
+db.add_db()
