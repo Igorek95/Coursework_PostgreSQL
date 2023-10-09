@@ -86,15 +86,21 @@ class DBManager:
                                   password=self._password) as conn:
                 with conn.cursor() as cur:
                     for vacancy in data_vacancies:
-                        # Создаем строку SQL для вставки информации о компании
-                        company_sql = ('INSERT INTO company (company_name, count_vacancy) VALUES (%s, 1) ON CONFLICT ('
-                                       'company_name) DO UPDATE SET count_vacancy = company.count_vacancy + 1 '
-                                       'RETURNING id_company')
-                        company_values = (vacancy[0],)
+                        # Проверяем, существует ли компания с таким именем
+                        cur.execute("SELECT id_company FROM company WHERE company_name = %s", (vacancy[0],))
+                        company_id = cur.fetchone()
 
-                        # Вставляем информацию о компании и получаем ID компании
-                        cur.execute(company_sql, company_values)
-                        company_id = cur.fetchone()[0]
+                        if company_id:
+                            company_id = company_id[0]
+                            # Обновляем количество вакансий у существующей компании
+                            cur.execute("UPDATE company SET count_vacancy = count_vacancy + 1 WHERE id_company = %s",
+                                        (company_id,))
+                        else:
+                            # Если компании нет, создаем новую и получаем ее ID
+                            cur.execute(
+                                "INSERT INTO company (company_name, count_vacancy) VALUES (%s, 1) RETURNING id_company",
+                                (vacancy[0],))
+                            company_id = cur.fetchone()[0]
 
                         # Создаем строку SQL для вставки данных о вакансии
                         vacancies_sql = ('INSERT INTO vacancies (company_id, name_job, avr_salary, link_vacancy, '

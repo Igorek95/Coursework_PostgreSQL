@@ -32,12 +32,14 @@ class HeadHunterAPI:
         if response.status_code == 200:
             data = response.json()
             response.close()
-            data_vacancy = requests.get(data.get('items')[0].get('vacancies_url')).json()
-            self.data_vacancies(data_vacancy)
-
+            items = data.get('items', [])  # Проверка наличия данных
+            if items:
+                data_vacancy = requests.get(items[0].get('vacancies_url')).json()
+                self.data_vacancies(data_vacancy)
+            else:
+                print(f"Для компании '{search_query}' нет доступных вакансий.")
         else:
             print("Ошибка получения данных")
-            return []
 
     def convert_currency_to_rub(self, currency, amount):
         if currency == "RUR":
@@ -76,16 +78,3 @@ class HeadHunterAPI:
                 Vacancy(name_company, name_job, salary_from, salary_to, link, address)
 
 
-hh = HeadHunterAPI()
-hh.get_vacancies('CoMagic')
-hh.get_vacancies('Yandex')
-hh.get_vacancies('Открытие')
-hh.get_vacancies('Сбер')
-# pprint.pprint(Vacancy.data)
-db = DBManager('localhost', 'coursework_postgresql', 'postgres', 1234)
-db.create_database()
-db.add_db()
-db.get_all_vacancies()
-db.get_avg_salary()
-db.get_vacancies_with_higher_salary()
-db.get_vacancies_with_keyword('python')
