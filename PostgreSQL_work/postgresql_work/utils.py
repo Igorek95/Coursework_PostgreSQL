@@ -25,7 +25,7 @@ def get_interesting_companies():
             elif company_name:
                 companies.append(company_name)
             else:
-                print("Вы не указали ни одной компании. Пожалуйста, укажите хотя бы одну.")
+                print("Вы ничего не написали, попробуйте еще раз.")
 
     return companies
 
