@@ -160,7 +160,7 @@ class DBManager:
                                   password=self._password) as conn:
                 with conn.cursor() as cur:
                     # Выполняем SQL-запрос для получения средней зарплаты по вакансиям
-                    cur.execute("SELECT AVG(avr_salary) FROM vacancies")
+                    cur.execute("SELECT AVG(avr_salary) FROM vacancies WHERE avr_salary > 0")
 
                     # Извлекаем результат запроса
                     avg_salary = cur.fetchone()[0]
